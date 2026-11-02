@@ -4,7 +4,7 @@
 // ถ้าโหลดไฟล์ไม่ได้ (เช่นเปิดไฟล์ตรงจากเครื่องโดยไม่ผ่านเว็บ) เกมจะข้ามเอฟเฟกต์เหล่านี้และเล่นต่อได้ตามปกติ
 const FX_SHEETS = [
   'sword-slash', 'hit-spark', 'blunt-hit', 'shield-block', 'divine-shield', 'heart-pickup',
-  'power-star', 'haste', 'small-explosion', 'firework-burst', 'soul-rise',
+  'power-star', 'haste', 'small-explosion', 'firework-burst', 'soul-rise', 'lightning-strike',
 ];
 
 class BattleScene extends Phaser.Scene {
@@ -24,10 +24,13 @@ class BattleScene extends Phaser.Scene {
     FX_SHEETS.forEach((n) => {
       if (!this.textures.exists(n)) return;
       const count = this.textures.get(n).getFrameNames().length;
+      // ความเร็วตามที่เรนเดอร์ไว้ในไฟล์ (บางเอฟเฟกต์เรนเดอร์ 20 fps เพื่อให้ไฟล์เล็กลง)
+      const f0 = this.textures.getFrame(n, n + ' 0');
+      const ms = f0 && f0.customData && f0.customData.duration;
       this.anims.create({
         key: n,
         frames: this.anims.generateFrameNames(n, { prefix: n + ' ', start: 0, end: count - 1 }),
-        frameRate: 30,
+        frameRate: ms ? 1000 / ms : 30,
       });
     });
     Sprites.register(this);
@@ -86,7 +89,8 @@ class BattleScene extends Phaser.Scene {
     for (let x = 16; x < 640; x += 32) g.fillRect(x, this.groundY + 21, 8, 3);
   }
 
-  setBoss(cfg) {
+  // final = บอสตัวสุดท้าย: มีฉากเปิดตัว LAST BOSS ก่อนบอสลงมา (ยาว CONFIG.lastBossIntroMs)
+  setBoss(cfg, final) {
     this.bossCfg = cfg;
     this.dim.setVisible(false);
     this.drawBackground(cfg);
@@ -96,6 +100,16 @@ class BattleScene extends Phaser.Scene {
     b.setTexture('boss-' + cfg.id).setVisible(true).setAlpha(1).setAngle(0).setScale(1).clearTint();
     b.x = this.bossHome;
     b.y = -40;
+    if (final) {
+      this.lastBossIntro();
+      this.time.delayedCall(CONFIG.lastBossIntroMs - 600, () => this.dropBoss());
+    } else {
+      this.dropBoss();
+    }
+  }
+
+  dropBoss() {
+    const b = this.boss;
     this.tweens.add({
       targets: b, y: this.groundY, duration: 600, ease: 'Bounce.out',
       onComplete: () => {
@@ -103,6 +117,43 @@ class BattleScene extends Phaser.Scene {
         this.cameras.main.shake(150, 0.01);
         this.tweens.add({ targets: b, scaleY: 0.95, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       },
+    });
+  }
+
+  // ฉากเปิดตัวบอสสุดท้าย: ฉากมืด ฟ้าผ่า 2 ครั้ง ตัวหนังสือ LAST BOSS กระแทกเข้ามา
+  lastBossIntro() {
+    const cam = this.cameras.main;
+    this.dim.setFillStyle(0x05040f).setAlpha(0).setVisible(true);
+    this.tweens.add({ targets: this.dim, alpha: 0.7, duration: 400 });
+    Sfx.rumble();
+
+    // สายฟ้าฟาดลงพื้นที่ประมาณ 0.8 วินาทีหลังเริ่มเอฟเฟกต์
+    this.fx('lightning-strike', this.bossHome, this.groundY, { scale: 0.85, originY: 0.865 });
+    this.fx('lightning-strike', 330, this.groundY, { scale: 0.7, originY: 0.865, flip: true, delay: 500 });
+    [800, 1300].forEach((t, i) => this.time.delayedCall(t, () => {
+      Sfx.thunder();
+      cam.flash(i ? 140 : 220, 220, 230, 255);
+      cam.shake(i ? 200 : 350, i ? 0.012 : 0.022);
+    }));
+
+    this.time.delayedCall(800, () => {
+      const big = this.add.text(320, 88, 'LAST BOSS', {
+        fontFamily: 'Kanit', fontSize: '64px', color: '#ff3b3b', stroke: '#ffd23f', strokeThickness: 6,
+      }).setOrigin(0.5).setDepth(26).setScale(3).setAlpha(0);
+      const sub = this.add.text(320, 140, 'บอสตัวสุดท้าย', {
+        fontFamily: 'Kanit', fontSize: '22px', color: '#ffffff', stroke: '#000000', strokeThickness: 5,
+      }).setOrigin(0.5).setDepth(26).setAlpha(0);
+      this.tweens.add({ targets: big, scale: 1, alpha: 1, duration: 240, ease: 'Quad.in' });
+      this.tweens.add({ targets: big, scale: 1.06, duration: 120, yoyo: true, repeat: 4, delay: 300 });
+      this.tweens.add({ targets: sub, alpha: 1, delay: 300, duration: 200 });
+      this.tweens.add({
+        targets: [big, sub], alpha: 0, delay: 1300, duration: 300,
+        onComplete: () => { big.destroy(); sub.destroy(); },
+      });
+    });
+
+    this.time.delayedCall(CONFIG.lastBossIntroMs - 700, () => {
+      this.tweens.add({ targets: this.dim, alpha: 0, duration: 500, onComplete: () => this.dim.setVisible(false) });
     });
   }
 
@@ -228,7 +279,7 @@ class BattleScene extends Phaser.Scene {
       targets: pl, x: pl.x - 40, y: this.groundY, angle: -90, duration: 500, ease: 'Quad.out',
       onComplete: () => pl.setTint(0x666666),
     });
-    this.dim.setAlpha(0).setVisible(true);
+    this.dim.setFillStyle(0x3a0008).setAlpha(0).setVisible(true);
     this.tweens.add({ targets: this.dim, alpha: 0.5, duration: 800 });
 
     this.time.delayedCall(500, () => {

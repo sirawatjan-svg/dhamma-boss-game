@@ -91,6 +91,13 @@ const Sfx = (() => {
     block: () => { tone(880, 0.1, { type: 'triangle' }); tone(1320, 0.15, { type: 'triangle', delay: 0.08 }); },
     land: () => { noise(0.12, 0.2); tone(90, 0.15, { slide: -40 }); },
     tick: () => tone(1000, 0.03, { vol: 0.05 }),
+    // ฟ้าร้อง: เสียงแตกเปรี้ยง ตามด้วยเสียงคำรามต่ำ ๆ
+    thunder: () => {
+      noise(0.08, 0.5);
+      noise(1.4, 0.3, 0.05);
+      tone(55, 1.2, { type: 'sawtooth', slide: -20, vol: 0.14, delay: 0.05 });
+    },
+    rumble: () => tone(42, 2.2, { type: 'sawtooth', slide: -8, vol: 0.06 }),
     explode: () => { noise(0.6, 0.3); tone(120, 0.5, { type: 'sawtooth', slide: -90, vol: 0.12 }); },
     pop: () => { noise(0.15, 0.15); tone(600, 0.1, { slide: 400, vol: 0.06 }); },
     // เพลงฉลองสั้น ๆ บอสตัวสุดท้ายยาวขึ้น

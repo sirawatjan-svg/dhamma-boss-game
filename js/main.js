@@ -64,16 +64,22 @@
     hideScreen();
     s.bossIndex = i;
     s.bossHp = boss().hp;
-    Sfx.startMusic(boss().bpm);
+    // บอสตัวสุดท้ายมีฉากเปิดตัวก่อน เพลงและคำถามจึงเริ่มช้ากว่า
+    const final = i === CONFIG.bosses.length - 1;
+    const intro = final ? CONFIG.lastBossIntroMs : 0;
+    Sfx.stopMusic();
+    const bpm = boss().bpm;
+    if (intro) setTimeout(() => Sfx.startMusic(bpm), intro - 600);
+    else Sfx.startMusic(bpm);
     battle.resetPlayer();
-    battle.setBoss(boss());
+    battle.setBoss(boss(), final);
     refreshHud();
     if (s.rewardFx) {
       const id = s.rewardFx;
       s.rewardFx = null;
-      setTimeout(() => battle.rewardFx(id), 700);
+      setTimeout(() => battle.rewardFx(id), 700 + intro);
     }
-    setTimeout(nextQuestion, 900);
+    setTimeout(nextQuestion, 900 + intro);
   }
 
   function refreshHud() {
