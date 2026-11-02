@@ -270,6 +270,18 @@
     scale: { mode: Phaser.Scale.NONE },
     scene: [BattleScene],
   });
+  // เปิดไฟล์ตรงจากเครื่องโหลดเอฟเฟกต์แบบไฟล์แยกไม่ได้ จึงโหลดไฟล์ที่ฝังเอฟเฟกต์ไว้แทน (?embed ใช้ทดสอบ)
+  const needEmbed = location.protocol === 'file:' || /[?&]embed\b/.test(location.search);
+  const fxData = needEmbed
+    ? new Promise((done) => {
+      const sc = document.createElement('script');
+      sc.src = 'js/fx-data.js?v=' + CONFIG.version;
+      sc.onload = sc.onerror = done;
+      document.body.appendChild(sc);
+    })
+    : Promise.resolve();
+
   // รอฟอนต์ไทยโหลดก่อน ตัวหนังสือในฉากจะได้ไม่เป็นฟอนต์สำรอง
-  (document.fonts ? document.fonts.load('20px Kanit') : Promise.resolve()).catch(() => {}).then(boot);
+  const fonts = (document.fonts ? document.fonts.load('20px Kanit') : Promise.resolve()).catch(() => {});
+  Promise.all([fonts, fxData]).then(boot);
 })();

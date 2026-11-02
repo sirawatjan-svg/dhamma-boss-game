@@ -11,7 +11,13 @@ class BattleScene extends Phaser.Scene {
   constructor() { super('battle'); }
 
   preload() {
-    FX_SHEETS.forEach((n) => this.load.atlas(n, `assets/fx/${n}.png`, `assets/fx/${n}.json`));
+    // เปิดไฟล์ตรงจากเครื่อง (file://) ใช้ข้อมูลที่ฝังไว้ใน js/fx-data.js เพราะเบราว์เซอร์ไม่ยอมโหลดไฟล์แยก
+    const data = window.FX_DATA;
+    FX_SHEETS.forEach((n) => {
+      if (data && data[n]) this.load.atlas(n, data[n].png, data[n].json);
+      else this.load.atlas(n, `assets/fx/${n}.png?v=${CONFIG.version}`, `assets/fx/${n}.json?v=${CONFIG.version}`);
+    });
+    this.load.on('loaderror', (file) => console.warn('โหลดเอฟเฟกต์ไม่สำเร็จ:', file.key, file.src));
   }
 
   create() {
