@@ -1,0 +1,294 @@
+:root {
+  --bg: #0f0e17;
+  --panel: #1b1a2e;
+  --line: #3a3655;
+  --text: #f4f1e8;
+  --muted: #a7a3b8;
+  --gold: #f2c14e;
+  --right: #2f9e5a;
+  --wrong: #d0453e;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #07060d;
+  color: var(--text);
+  font-family: 'Kanit', sans-serif;
+}
+
+button, input, select { font: inherit; }
+
+/* กรอบเกม 1280x720 คงที่ main.js ย่อขยายด้วย transform ให้พอดีจอ */
+#app {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1280px;
+  height: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg);
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+}
+
+#hud {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  height: 28px;
+  padding-right: 52px;
+  color: var(--muted);
+  font-size: 17px;
+  white-space: nowrap;
+}
+
+#game {
+  flex: none;
+  width: 1248px;
+  height: 421px;   /* อัตราส่วนเดียวกับฉาก 640x216 */
+  background: #000;
+  outline: 3px solid var(--line);
+}
+#game canvas { display: block; width: 100% !important; height: 100% !important; image-rendering: pixelated; }
+
+/* ---------- แผงคำถาม (สูงคงที่ เฉลยแสดงแทนตัวเลือก) ---------- */
+#quiz {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 3px solid var(--line);
+}
+
+#timer {
+  position: relative;
+  flex: none;
+  height: 26px;
+  background: #2a2840;
+  border: 2px solid #000;
+}
+#timer-fill { height: 100%; width: 100%; background: var(--gold); }
+#timer.danger #timer-fill { background: var(--wrong); }
+#q-meta, #timer-text {
+  position: absolute;
+  top: 0;
+  line-height: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+#q-meta { left: 8px; }
+#timer-text { right: 8px; }
+
+#q-text {
+  flex: none;
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.35;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+#choices {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 4px 12px;
+  text-align: left;
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--text);
+  background: #262443;
+  border: 3px solid #000;
+  box-shadow: 0 3px 0 #000;
+  cursor: pointer;
+  overflow: hidden;
+}
+.choice:hover:not(:disabled) { background: #33305a; }
+.choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+.choice:disabled { cursor: default; }
+.choice.right { background: var(--right); }
+.choice.wrong { background: var(--wrong); }
+.choice .key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  font-weight: 600;
+  color: #000;
+  background: var(--gold);
+}
+
+#quiz.explaining #choices { display: none; }
+#explain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  background: #2a1f2e;
+  border-left: 6px solid var(--wrong);
+  overflow: hidden;
+}
+#explain > div { flex: 1; min-width: 0; }
+#explain h3 { margin: 0; font-size: 20px; color: #ff8a80; }
+#explain p { margin: 2px 0 0; font-size: 20px; line-height: 1.4; }
+#explain-next {
+  flex: none;
+  padding: 8px 18px;
+  font-weight: 600;
+  color: #000;
+  background: var(--gold);
+  border: 3px solid #000;
+  box-shadow: 0 3px 0 #000;
+  cursor: pointer;
+}
+
+/* ---------- หน้าจอเริ่ม / พักระหว่างบอส / ผลลัพธ์ ---------- */
+#screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px;
+  text-align: center;
+  background: rgba(10, 9, 20, 0.95);
+}
+#screen h1 { margin: 0; font-size: 64px; color: var(--gold); text-shadow: 5px 5px 0 #000; }
+#screen h2 { margin: 0; font-size: 46px; color: var(--gold); text-shadow: 4px 4px 0 #000; }
+#screen p { margin: 0; font-size: 20px; }
+#screen .sub, #screen .note { color: var(--muted); }
+#screen .note { font-size: 16px; }
+#screen .who { font-size: 24px; }
+
+.rules {
+  margin: 0;
+  padding: 12px 18px 12px 36px;
+  text-align: left;
+  font-size: 20px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.form { display: flex; justify-content: center; gap: 24px; font-size: 20px; }
+.form label { display: flex; align-items: center; gap: 8px; }
+.form input, .form select {
+  padding: 6px 10px;
+  color: var(--text);
+  background: #262443;
+  border: 2px solid #000;
+}
+
+#screen button {
+  padding: 8px 20px;
+  font-size: 20px;
+  color: var(--text);
+  background: #262443;
+  border: 3px solid #000;
+  box-shadow: 0 4px 0 #000;
+  cursor: pointer;
+}
+#screen button.big { padding: 10px 32px; font-size: 26px; font-weight: 600; color: #000; background: var(--gold); }
+#screen button:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+
+.results { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 820px; }
+.results div {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+.results b { font-size: 34px; color: var(--gold); }
+.results span { font-size: 16px; color: var(--muted); }
+.row { display: flex; justify-content: center; gap: 12px; margin-top: 6px; }
+
+/* หัวข้อเด้งเข้า กล่องผลลัพธ์เลื่อนขึ้นทีละกล่อง */
+#screen h1, #screen h2 { animation: pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.results div { animation: rise 0.4s ease-out both; }
+.results div:nth-child(2) { animation-delay: 0.12s; }
+.results div:nth-child(3) { animation-delay: 0.24s; }
+.results div:nth-child(4) { animation-delay: 0.36s; }
+@keyframes pop { from { transform: scale(0.3); opacity: 0; } }
+@keyframes rise { from { transform: translateY(18px); opacity: 0; } }
+
+/* ---------- วงล้อรางวัล ---------- */
+.wheel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 600px;
+}
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  font-size: 22px;
+  text-align: left;
+  background: var(--panel);
+  border: 4px solid #000;
+  box-shadow: 0 0 0 2px var(--line);
+  opacity: 0.55;
+  transition: opacity 0.05s;
+}
+.slot b {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  font-size: 30px;
+  background: #262443;
+  border: 2px solid #000;
+}
+.slot.lit { opacity: 1; background: #3a3462; box-shadow: 0 0 0 3px var(--gold); }
+.slot.win { animation: win 0.5s steps(2) 3; background: #4a3f1a; }
+@keyframes win { 50% { box-shadow: 0 0 0 6px var(--gold), 0 0 24px var(--gold); } }
+#wheel-result { min-height: 30px; font-size: 22px; color: var(--gold); }
+#screen button:disabled { opacity: 0.5; cursor: default; }
+
+#mute-btn {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 30;
+  width: 40px;
+  height: 34px;
+  font-size: 18px;
+  color: var(--text);
+  background: #262443;
+  border: 2px solid #000;
+  cursor: pointer;
+}

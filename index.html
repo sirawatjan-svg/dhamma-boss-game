@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>นักธรรมปราบกิเลส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+<!-- ทั้งเกมอยู่ในกรอบ 1280x720 (16:9) แล้วย่อขยายให้พอดีจอ -->
+<div id="app">
+  <header id="hud">
+    <div id="boss-label"></div>
+    <div id="stats"></div>
+  </header>
+
+  <div id="game"></div>
+
+  <section id="quiz" hidden>
+    <div id="timer"><div id="timer-fill"></div><span id="q-meta"></span><span id="timer-text"></span></div>
+    <p id="q-text"></p>
+    <div id="choices"></div>
+    <div id="explain" hidden>
+      <div>
+        <h3 id="explain-title"></h3>
+        <p id="explain-text"></p>
+      </div>
+      <button id="explain-next">ไปต่อ ▶</button>
+    </div>
+  </section>
+
+  <section id="screen"><p>กำลังโหลด…</p></section>
+  <button id="mute-btn" title="เปิด/ปิดเสียง"></button>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
