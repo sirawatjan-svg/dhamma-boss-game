@@ -68,6 +68,11 @@
     battle.resetPlayer();
     battle.setBoss(boss());
     refreshHud();
+    if (s.rewardFx) {
+      const id = s.rewardFx;
+      s.rewardFx = null;
+      setTimeout(() => battle.rewardFx(id), 700);
+    }
     setTimeout(nextQuestion, 900);
   }
 
@@ -179,6 +184,7 @@
   }
 
   function applyReward(r) {
+    s.rewardFx = r.id;   // เล่นเอฟเฟกต์รางวัลตอนเริ่มสู้บอสถัดไป
     if (r.id === 'double') { s.buff.double = true; return 'ได้คะแนนคูณ 2 ตลอดการสู้บอสถัดไป!'; }
     if (r.id === 'shield') { s.shields++; return 'ได้โล่! ตอบผิดครั้งต่อไปจะไม่เสียหัวใจ'; }
     if (r.id === 'time') { s.buff.bonusTime += 10; return 'เวลาต่อข้อเพิ่ม 10 วินาทีตลอดการสู้บอสถัดไป!'; }

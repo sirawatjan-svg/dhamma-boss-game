@@ -1,9 +1,29 @@
 // ฉากต่อสู้ (Phaser): ฉากหลัง ตัวละคร หัวใจ แถบพลังบอส และแอนิเมชันโจมตี
 // main.js เป็นผู้สั่งงานผ่านเมธอดของคลาสนี้ ฉากไม่รู้กติกาเกมเอง
+// เอฟเฟกต์พิกเซลจากไลบรารี pixelfx (MIT) เรนเดอร์เป็น sprite sheet ไว้ใน assets/fx/
+// ถ้าโหลดไฟล์ไม่ได้ (เช่นเปิดไฟล์ตรงจากเครื่องโดยไม่ผ่านเว็บ) เกมจะข้ามเอฟเฟกต์เหล่านี้และเล่นต่อได้ตามปกติ
+const FX_SHEETS = [
+  'sword-slash', 'hit-spark', 'blunt-hit', 'shield-block', 'divine-shield', 'heart-pickup',
+  'power-star', 'haste', 'small-explosion', 'firework-burst', 'soul-rise',
+];
+
 class BattleScene extends Phaser.Scene {
   constructor() { super('battle'); }
 
+  preload() {
+    FX_SHEETS.forEach((n) => this.load.atlas(n, `assets/fx/${n}.png`, `assets/fx/${n}.json`));
+  }
+
   create() {
+    FX_SHEETS.forEach((n) => {
+      if (!this.textures.exists(n)) return;
+      const count = this.textures.get(n).getFrameNames().length;
+      this.anims.create({
+        key: n,
+        frames: this.anims.generateFrameNames(n, { prefix: n + ' ', start: 0, end: count - 1 }),
+        frameRate: 30,
+      });
+    });
     Sprites.register(this);
     this.groundY = 185;
     this.playerHome = 170;
@@ -108,6 +128,8 @@ class BattleScene extends Phaser.Scene {
       onYoyo: () => {
         Sfx.hit();
         this.hitFlash(this.boss, 0xffffff);
+        this.fx('sword-slash', this.boss.x - 10, this.groundY - 40, { scale: 1.8 });
+        this.fx('hit-spark', this.boss.x - 30, this.groundY - 75, { scale: 1.6 });
         this.cameras.main.shake(120, 0.008);
         this.floatText(this.boss.x, this.groundY - 130, '-1', '#ffd23f');
       },
@@ -122,12 +144,14 @@ class BattleScene extends Phaser.Scene {
       onYoyo: () => {
         if (blocked) {
           Sfx.block();
+          this.fx('shield-block', this.player.x + 20, this.groundY - 55, { scale: 1.8 });
           this.cameras.main.shake(120, 0.006);
           this.hitFlash(this.player, 0x9ef0ff);
           this.floatText(this.player.x, this.groundY - 120, 'โล่กันได้!', '#9ef0ff');
           return;
         }
         Sfx.hurt();
+        this.fx('blunt-hit', this.player.x + 10, this.groundY - 55, { scale: 1.8 });
         this.cameras.main.shake(200, 0.015);
         this.hitFlash(this.player, 0xff4040);
         this.floatText(this.player.x, this.groundY - 120, '-1 ♥', '#ff6b6b');
@@ -158,6 +182,7 @@ class BattleScene extends Phaser.Scene {
       this.cameras.main.flash(250, 255, 255, 255);
       this.cameras.main.shake(400, 0.025);
       this.burst(b.x, this.groundY - 60, colors, 90, 320);
+      this.fx('small-explosion', b.x, this.groundY - 5, { scale: 1.1, originY: 0.81, ms: 1500 });
       this.tweens.add({ targets: b, scaleX: 1.4, scaleY: 0.2, alpha: 0, duration: 250, ease: 'Quad.in' });
     });
 
@@ -175,7 +200,9 @@ class BattleScene extends Phaser.Scene {
         for (let i = 0; i < 4; i++) {
           this.time.delayedCall(300 + i * 350, () => {
             Sfx.pop();
-            this.burst(Phaser.Math.Between(120, 520), Phaser.Math.Between(30, 90), sky, 50, 200);
+            const fx = Phaser.Math.Between(120, 520), fy = Phaser.Math.Between(40, 90);
+            this.burst(fx, fy, sky, 50, 200);
+            this.fx('firework-burst', fx, fy, { scale: 1.6 });
           });
         }
       }
@@ -202,6 +229,7 @@ class BattleScene extends Phaser.Scene {
       this.floatText(this.boss.x, this.groundY - 130, 'ฮ่า ฮ่า ฮ่า!', '#ffffff', 26);
       this.tweens.add({ targets: this.boss, y: this.groundY - 14, duration: 140, yoyo: true, repeat: 3, ease: 'Quad.out' });
     });
+    this.fx('soul-rise', pl.x - 40, this.groundY - 10, { scale: 2.2, originY: 1, delay: 600 });
     this.time.delayedCall(900, () => this.bigText('พ่ายแพ้...', '#c9c3d9'));
     this.time.delayedCall(2600, done);
   }
@@ -249,6 +277,34 @@ class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(25).setScale(0);
     this.tweens.add({ targets: t, scale: 1, duration: 400, ease: 'Back.out' });
     this.tweens.add({ targets: t, alpha: 0, delay: 1700, duration: 400, onComplete: () => t.destroy() });
+  }
+
+  // เล่นเอฟเฟกต์ pixelfx หนึ่งรอบแล้วลบทิ้ง
+  // ms = ตัดให้จบเร็วกว่าเอฟเฟกต์เต็ม (ค่อย ๆ จางหาย) เหมาะกับควันที่ลอยนาน
+  fx(name, x, y, { scale = 2, originY = 0.5, flip = false, delay = 0, ms = 0 } = {}) {
+    if (!this.anims.exists(name)) return;
+    const go = () => {
+      const s = this.add.sprite(x, y, name, name + ' 0').setScale(scale).setOrigin(0.5, originY).setFlipX(flip).setDepth(12);
+      s.play(name);
+      s.once('animationcomplete', () => s.destroy());
+      if (ms) {
+        this.time.delayedCall(ms, () => {
+          if (!s.active) return;
+          this.tweens.add({ targets: s, alpha: 0, duration: 300, onComplete: () => s.destroy() });
+        });
+      }
+    };
+    if (delay) this.time.delayedCall(delay, go); else go();
+  }
+
+  // เอฟเฟกต์รางวัลจากวงล้อ เล่นที่ตัวผู้เล่นตอนเริ่มสู้บอสถัดไป
+  rewardFx(id) {
+    const p = this.player;
+    const at = { x: p.x, y: this.groundY - 50 };
+    if (id === 'heart') this.fx('heart-pickup', at.x, at.y - 20, { scale: 2.2 });
+    if (id === 'shield') this.fx('divine-shield', at.x, at.y, { scale: 2.3 });
+    if (id === 'double') this.fx('power-star', at.x, at.y, { scale: 2.4 });
+    if (id === 'time') this.fx('haste', at.x, at.y, { scale: 2.4 });
   }
 
   hitFlash(target, color) {
