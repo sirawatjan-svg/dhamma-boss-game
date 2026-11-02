@@ -6,6 +6,10 @@
   let timeLimit = CONFIG.timePerQuestion;
   let s = null; // สถานะของการเล่นรอบนี้
 
+  // ลิงก์ทดสอบสำหรับครู: ?boss=3 เริ่มที่บอสตัวที่ 3 เลย (ผลจะติดป้าย "โหมดทดสอบ")
+  const testBoss = Math.min(CONFIG.bosses.length,
+    Math.max(1, Number(new URLSearchParams(location.search).get('boss')) || 1)) - 1;
+
   window.onBattleReady = (scene) => { battle = scene; showTitle(); };
 
   const boss = () => CONFIG.bosses[s.bossIndex];
@@ -38,11 +42,14 @@
             `<option value="${t}"${t === timeLimit ? ' selected' : ''}>${t} วินาที</option>`).join('')}</select>
         </label>
       </div>
+      ${testBoss ? `<p class="note">โหมดทดสอบ: เริ่มที่บอส ${testBoss + 1}</p>` : ''}
       <button class="big" id="start-btn">เริ่มเกม ▶</button>`);
     $('start-btn').onclick = () => {
       timeLimit = Number($('time-select').value);
       newRun($('player-name').value.trim());
-      startBoss(0);
+      s.test = testBoss > 0;
+      s.checkpoint = testBoss;
+      startBoss(testBoss);
     };
   }
 
@@ -217,6 +224,7 @@
       `เวลา ${fmtTime(s.timeUsed)}`,
       won ? `ชนะครบ ${total} บอส` : `ถึงบอส ${reached}/${total}`,
       s.retries ? `เริ่มจากจุดบันทึก ${s.retries} ครั้ง` : '',
+      s.test ? 'โหมดทดสอบ' : '',
     ].filter(Boolean).join(' | ');
 
     showScreen(`
@@ -234,7 +242,7 @@
         <button id="restart-btn">เริ่มใหม่ทั้งหมด</button>
       </div>`);
     screen.querySelector('.who').textContent =
-      s.name + (s.retries ? ` · เริ่มจากจุดบันทึก ${s.retries} ครั้ง` : '');
+      s.name + (s.retries ? ` · เริ่มจากจุดบันทึก ${s.retries} ครั้ง` : '') + (s.test ? ' · โหมดทดสอบ' : '');
 
     const resume = $('resume-btn');
     if (resume) resume.onclick = () => {

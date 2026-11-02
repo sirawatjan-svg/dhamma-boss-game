@@ -4,10 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>นักธรรมปราบกิเลส</title>
+<script>
+// เบราว์เซอร์จำหน้านี้ไว้ได้นาน 10 นาที จึงถามเวอร์ชันล่าสุดจากเว็บทุกครั้ง ถ้าใหม่กว่าให้โหลดหน้าใหม่ทันที
+// เลขนี้ต้องตรงกับ version.json และ CONFIG.version — ใช้ node tools/bump-version.js เพื่อเปลี่ยนทุกที่พร้อมกัน
+var PAGE_VERSION = '5';
+if (location.protocol !== 'file:' && window.fetch) {
+  fetch('version.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+    var m = location.search.match(/[?&]v=([^&]*)/);
+    if (j.v !== PAGE_VERSION && (!m || m[1] !== j.v)) {
+      var q = location.search.replace(/[?&]v=[^&]*/, '').replace(/^&/, '?');
+      location.replace(location.pathname + (q ? q + '&' : '?') + 'v=' + j.v + location.hash);
+    }
+  }).catch(function () {});
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
@@ -37,12 +51,12 @@
   <button id="mute-btn" title="เปิด/ปิดเสียง"></button>
 </div>
 
-<script src="js/config.js?v=4"></script>
-<script src="js/questions.js?v=4"></script>
-<script src="js/sfx.js?v=4"></script>
-<script src="js/sprites.js?v=4"></script>
-<script src="js/battle.js?v=4"></script>
-<script src="js/quiz.js?v=4"></script>
-<script src="js/main.js?v=4"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/questions.js?v=5"></script>
+<script src="js/sfx.js?v=5"></script>
+<script src="js/sprites.js?v=5"></script>
+<script src="js/battle.js?v=5"></script>
+<script src="js/quiz.js?v=5"></script>
+<script src="js/main.js?v=5"></script>
 </body>
 </html>
